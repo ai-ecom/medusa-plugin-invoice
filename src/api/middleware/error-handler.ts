@@ -24,8 +24,6 @@ export default () => {
       message: err.message,
     }
 
-    console.log(err)
-
     let statusCode = 500
     switch (errorType) {
       case QUERY_RUNNER_RELEASED:
