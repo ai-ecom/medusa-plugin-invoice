@@ -1,7 +1,6 @@
 import puppeteer from "puppeteer";
 import * as fs from 'fs';
 import * as path from 'path';
-import { beautyInvoiceNumber } from "./beauty-invoice-number";
 
 const _generateHtmlLineItemRow = (c1, c2, c3, c4, c5) => {
 
@@ -33,12 +32,7 @@ const _generateLineItems = async (lineItems, type = 'invoice', orderTax, moneyFo
     const propertyList = [];
 
     let netPrice = unit_price
-    if (type === 'cancellation')
-      netPrice = netPrice * -1;
-
     let lineTotal = quantity * unit_price;
-    if (type === 'cancellation')
-      lineTotal = lineTotal * -1;
 
     let _title = `<span>${title}</span>`
     for (const {text} of propertyList) {
@@ -60,10 +54,9 @@ const _generateLineItems = async (lineItems, type = 'invoice', orderTax, moneyFo
 }
 
 const _generateFooter = async (invoice) => {
-  const { order, number: invoiceNumber } = invoice;
+  const { order } = invoice;
   const {
     orderNotes,
-    paymentMethod,
   } = order;
 
   let htmlFooter = `<div class="tw-grid tw-grid-cols-2 tw-gap-2" style="width: 100%">`;
@@ -146,15 +139,12 @@ export async function generateInvoicePDF(invoice) {
       }
 
       const invoiceDate = new Date(order.created_at)
-      const datePath = `${invoiceDate.getDate()}${invoiceDate.getMonth()}${invoiceDate.getFullYear()}`;
       const invoiceName = `${!!invoiceFirstName ? invoiceFirstName : ''} ${!!invoiceLastName ? invoiceLastName : ''}`
       const shippingName = `${!!shippingFirstName ? shippingFirstName : ''} ${!!shippingLastName ? shippingLastName : ''}`
 
-
-      const invoiceNumber = beautyInvoiceNumber(parseInt(invNumber))
-      const nameOnFile = invoiceLastName
+      const nameOnFile = invoiceLastName || invoiceFirstName
       const targetDir = `${pathFile}/temp`;
-      const pdfTitle = `${invoiceNumber}-${order.display_id}-${nameOnFile}-${datePath}`;
+      const pdfTitle = `INV-${invoiceDate.getFullYear()}-${invoiceDate.getMonth()}-${invoiceDate.getDate()}-${invNumber}-${nameOnFile}`;
       const targetPath = `${targetDir}/${pdfTitle}.pdf`;
 
       // Puppeteer
@@ -178,17 +168,17 @@ export async function generateInvoicePDF(invoice) {
 
       const replaceVariablesList = [
         {key: '{{document_logo}}', value: setting.invoice_logo_url},
-        {key: '{{document_title}}', value: "INVOICE"},
+        {key: '{{document_title}}', value: setting.invoice_title || "INVOICE"},
         {key: '{{date_title}}', value: "Order Date"},
-        {key: '{{date}}', value: invoiceDate},
+        {key: '{{date}}', value: invoiceDate.toLocaleDateString('de-DE')},
 
         {key: '{{invoice_title}}', value: "Invoice Number"},
-        {key: '{{invoice_number}}', value: invoiceNumber},
+        {key: '{{invoice_number}}', value: pdfTitle},
         {key: '{{order_title}}', value: "Order Number"},
         {key: '{{order_number}}', value: `${order.display_id}`},
         
         {key: '{{payment_title}}', value: "Payment Method"},
-        // {key: '{{payment_method}}', value: paymentTitle},
+        {key: '{{payment_method}}', value: "Cash On Delivery"},
 
         {key: '{{company_name}}', value: setting.invoice_company_name},
         {key: '{{address_line_1}}', value: setting.invoice_address_line_1},
