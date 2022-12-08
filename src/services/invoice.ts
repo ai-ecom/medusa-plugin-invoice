@@ -84,6 +84,22 @@ class InvoiceService extends TransactionBaseService {
         return invoice
     }
 
+    async retrieveByOrderId(orderId: string, config: FindConfig<Invoice>): Promise<Invoice> {
+        const manager = this.manager_
+        const invoiceRepo = manager.getCustomRepository(this.invoiceRepository_)
+
+        const invoice = await invoiceRepo.findOne({ order_id: orderId }, config)
+
+        if (!invoice) {
+            throw new MedusaError(
+                MedusaError.Types.NOT_FOUND,
+                `Invoice with OrderId ${orderId} was not found`
+            )
+        }
+
+        return invoice
+    }
+
     async create(invoiceObject: CreateInvoiceInput): Promise<Invoice> {
         return await this.atomicPhase_(async (manager) => {
             const invoiceRepo = manager.getCustomRepository(this.invoiceRepository_)
@@ -160,6 +176,8 @@ class InvoiceService extends TransactionBaseService {
         invoice.order = order
         // @ts-ignore
         invoice.setting = setting
+        // @ts-ignore
+        invoice.type = "default"
 
         return invoice
     }
