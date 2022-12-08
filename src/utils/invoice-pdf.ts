@@ -14,84 +14,39 @@ const _generateHtmlLineItemRow = (c1, c2, c3, c4, c5) => {
 
 }
 
-const _generateHtmlFooterBlock = (content) => {
-  return `<div class="col">
-         <p class="mb-0">${content}</p>
-       </div>`
-}
-
 const _generateLineItems = async (lineItems, type = 'invoice', orderTax, moneyFormatOptions) => {
 
   let htmlLineItems = ``;
 
-  for (let lineItemIndex = 0; lineItemIndex < lineItems.length; lineItemIndex++) {
+    for (let lineItemIndex = 0; lineItemIndex < lineItems.length; lineItemIndex++) {
 
-    const lineItem = lineItems[lineItemIndex];
-    const {title, unit_price, quantity, description } = lineItem;
+      const lineItem = lineItems[lineItemIndex];
+      const {title, unit_price, quantity, return_quantity, description } = lineItem;
 
-    const propertyList = [];
+      const propertyList = [];
 
-    let netPrice = unit_price
-    let lineTotal = quantity * unit_price;
+      let netPrice = unit_price
+      let lineTotal = quantity * unit_price;
+      if (type == "cancellation") {
+        lineTotal = return_quantity * unit_price;
+      }
 
-    let _title = `<span>${title}</span>`
-    for (const {text} of propertyList) {
-      _title += `<p style="font-size: 9px; font-weight: bold"> ${text} </p>`
-    }
+      let _title = `<span>${title}</span>`
+      for (const {text} of propertyList) {
+        _title += `<p style="font-size: 9px; font-weight: bold"> ${text} </p>`
+      }
 
-    const htmlRow = _generateHtmlLineItemRow(
-      _title,
-      quantity,
-      `${orderTax} %`,
-      `${_moneyFormat(netPrice, moneyFormatOptions)}`,
-      `${_moneyFormat(lineTotal, moneyFormatOptions)}`
-    );
-    htmlLineItems += htmlRow;
-
+      const htmlRow = _generateHtmlLineItemRow(
+        _title,
+        quantity,
+        `${orderTax} %`,
+        `${_moneyFormat(netPrice, moneyFormatOptions)}`,
+        `${_moneyFormat(lineTotal, moneyFormatOptions)}`
+      );
+      htmlLineItems += htmlRow;
   }
 
   return htmlLineItems;
-}
-
-const _generateFooter = async (invoice) => {
-  const { order } = invoice;
-  const {
-    orderNotes,
-  } = order;
-
-  let htmlFooter = `<div class="tw-grid tw-grid-cols-2 tw-gap-2" style="width: 100%">`;
-
-  if (!!orderNotes) {
-
-    const noteBlock = `<p>
-      <b>Order Notes</b>
-      </p>
-      Order Notes Here.....
-    `
-
-    htmlFooter += _generateHtmlFooterBlock(noteBlock)
-  }
-
-  // if (paymentKey === 'transfer') {
-  //   const paymentText = _generateHtmlFooterBlock(`
-  //   <ul style="list-style-type: none;">
-  //   <li><b>Payment Target </b>: Manual</li>
-  //   <br/>
-  //   <li><b>Bank Details</b></li>
-  //   <li><b>Bank</b>: Manual</li>
-  //   <li><b>Account Number</b>: 0</li>
-  //   <li><b>IBAN</b>: 0</li>
-  //   <li><b>BIC</b>: 0</li>
-  //   <li><b>Purpose</b>: ${invoiceNumber}</li>
-  //   </ul>
-  //   `)
-  //   htmlFooter += paymentText;
-  // }
-
-  htmlFooter += `</div>`
-
-  return htmlFooter;
-
 }
 
 const _moneyFormat = (num, options) => {
@@ -103,8 +58,8 @@ const _moneyFormat = (num, options) => {
 
 export async function generateInvoicePDF(invoice) {
     try {
-      const { order, number: invNumber, setting } = invoice
-      const { discount_total, shipping_total, subtotal, tax_total, total, billing_address, region, shipping_address } = order
+      const { order, number: invNumber, setting, type: invType, invoice: mainInvoice, payment_display, returnedItems } = invoice
+      const { discount_total, shipping_total, subtotal, tax_total, total, billing_address, region, shipping_address, items: orderItems } = order
       const pathFile = path.resolve(__dirname, "../invoices")
 
       const {
@@ -139,15 +94,22 @@ export async function generateInvoicePDF(invoice) {
       }
 
       const invoiceDate = new Date(order.created_at)
+      const mainInvoiceDate = invType == "cancellation" && new Date(mainInvoice.created_at)
       const invoiceName = `${!!invoiceFirstName ? invoiceFirstName : ''} ${!!invoiceLastName ? invoiceLastName : ''}`
       const shippingName = `${!!shippingFirstName ? shippingFirstName : ''} ${!!shippingLastName ? shippingLastName : ''}`
 
-      const nameOnFile = invoiceLastName || invoiceFirstName
+      const nameOnFile = (invoiceLastName || invoiceFirstName).toUpperCase()
       const targetDir = `${pathFile}/temp`;
-      const pdfTitle = `INV-${invoiceDate.getFullYear()}-${invoiceDate.getMonth()}-${invoiceDate.getDate()}-${invNumber}-${nameOnFile}`;
+      let pdfTitle = `INV-${invoiceDate.getFullYear()}-${invoiceDate.getMonth()}-${invoiceDate.getDate()}-${invNumber}-${nameOnFile}`;
+      let invTitle = setting.invoice_title || "INVOICE"
+
+      if (invType == "cancellation") {
+        pdfTitle = `INV-CANCELLATION-${invoiceDate.getFullYear()}-${invoiceDate.getMonth()}-${invoiceDate.getDate()}-${invNumber}-${nameOnFile}`;
+        invTitle = `Cancellation of Invoice <span style="font-size: 14pt; display: block;">INV-${mainInvoiceDate.getFullYear()}-${mainInvoiceDate.getMonth()}-${mainInvoiceDate.getDate()}-${mainInvoice.number}-${nameOnFile}</span>`
+      }
+
       const targetPath = `${targetDir}/${pdfTitle}.pdf`;
 
-      // Puppeteer
       const browser = await puppeteer.launch({
         args: ["--no-sandbox"], headless: true,
       });
@@ -168,9 +130,9 @@ export async function generateInvoicePDF(invoice) {
 
       const replaceVariablesList = [
         {key: '{{document_logo}}', value: setting.invoice_logo_url},
-        {key: '{{document_title}}', value: setting.invoice_title || "INVOICE"},
+        {key: '{{document_title}}', value: invTitle},
         {key: '{{date_title}}', value: "Order Date"},
-        {key: '{{date}}', value: invoiceDate.toLocaleDateString('de-DE')},
+        {key: '{{date}}', value: invoiceDate.toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })},
 
         {key: '{{invoice_title}}', value: "Invoice Number"},
         {key: '{{invoice_number}}', value: pdfTitle},
@@ -178,7 +140,7 @@ export async function generateInvoicePDF(invoice) {
         {key: '{{order_number}}', value: `${order.display_id}`},
         
         {key: '{{payment_title}}', value: "Payment Method"},
-        {key: '{{payment_method}}', value: "Cash On Delivery"},
+        {key: '{{payment_method}}', value: payment_display},
 
         {key: '{{company_name}}', value: setting.invoice_company_name},
         {key: '{{address_line_1}}', value: setting.invoice_address_line_1},
@@ -229,10 +191,10 @@ export async function generateInvoicePDF(invoice) {
       }
 
       // Add dynamic values
-      const lineItemsRows = await _generateLineItems(order.items, 'invoice', order.region.tax_rate, moneyFormatOptions);
+      const lineItemsRows = await _generateLineItems(invType == "cancellation" ? returnedItems : orderItems, invType, order.region.tax_rate, moneyFormatOptions);
       html = html.replace('{{line_items_rows}}', lineItemsRows);
 
-      const footer = await _generateFooter(invoice);
+      const footer = "";
       html = html.replace('{{footer}}', footer);
 
       await page.setContent(html, {waitUntil: 'networkidle0'});

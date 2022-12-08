@@ -6,6 +6,7 @@ import authenticate from "@medusajs/medusa/dist/api/middlewares/authenticate"
 
 import invoices from "./invoices";
 import invoiceSettings from "./invoice-settings";
+import invoiceCancellations from "./invoice-cancellations";
 
 const route = Router()
 
@@ -25,6 +26,7 @@ export default (app, rootDirectory, config) => {
     route.use(authenticate());
 
     invoices(route);
+    invoiceCancellations(route);
     invoiceSettings(route);
 
     return app;
