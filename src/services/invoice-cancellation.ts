@@ -155,9 +155,6 @@ class InvoiceCancellationService extends TransactionBaseService {
           listItemReturned.push(getLineItem)
         }
 
-
-        console.log(listItemReturned, refund, invoiceData, returnData)
-
         const invoiceSetting = await this.invoiceSettings_.all()
         const setting = []
         invoiceSetting.map((x) => {
@@ -209,7 +206,7 @@ class InvoiceCancellationService extends TransactionBaseService {
     ): Promise<InvoiceCancellation> {
         return await this.atomicPhase_(async (manager) => {
             const invoiceCancellationRepo = manager.getCustomRepository(this.invoiceCancellationRepository_)
-            const relations = ["order"]
+            const relations = []
 
             const invoice = await this.retrieve(invoiceId, {
                 relations,
