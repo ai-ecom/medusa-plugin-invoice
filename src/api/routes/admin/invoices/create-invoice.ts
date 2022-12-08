@@ -4,9 +4,9 @@ import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
 
 export default async (req, res) => {
-    const validated = await validator(AdminPostCalendarsReq, req.body)
+    const validated = await validator(AdminPostInvoicesReq, req.body)
 
-    const invoiceService: InvoiceService = req.scope.resolve("calendarService")
+    const invoiceService: InvoiceService = req.scope.resolve("invoiceService")
 
     const manager: EntityManager = req.scope.resolve("manager")
     const result = await manager.transaction(async (transactionManager) => {
@@ -16,7 +16,7 @@ export default async (req, res) => {
     res.status(200).json({ invoice: result })
 }
 
-export class AdminPostCalendarsReq {
+export class AdminPostInvoicesReq {
     @IsString()
     order_id: string
 

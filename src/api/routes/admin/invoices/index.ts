@@ -8,7 +8,13 @@ const route = Router()
 export default (app) => {
     app.use("/invoices", route);
 
-    route.get("/generate-pdf", middlewares.wrap(require("./generate-pdf").default));
+    route.post("/", middlewares.wrap(require("./create-invoice").default));
+
+    route.get("/", middlewares.wrap(require("./list-invoice").default));
+
+    route.get("/:id", middlewares.wrap(require("./get-invoice").default));
+
+    route.put("/:id", middlewares.wrap(require("./update-invoice").default));
 
     return app;
 }
@@ -17,6 +23,9 @@ export const defaultAdminInvoiceRelations = []
 
 export const defaultAdminInvoiceFields: (keyof Invoice)[] = [
     "id",
+    "order_id",
+    "status",
+    "paid_status",
     "metadata",
     "created_at",
     "updated_at",
