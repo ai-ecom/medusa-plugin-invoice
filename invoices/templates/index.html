@@ -1,0 +1,130 @@
+<!doctype html>
+<html class="no-js" lang="zxx">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="author" content="Ai-Ecom">
+  <meta name="description" content="Invoice">
+  <meta name="keywords" content="Invoice" />
+  <meta name="robots" content="INDEX,FOLLOW">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+
+<body style="background-color: white">
+  <div class="invoice-container" style="background-color: white">
+    <main>
+      <header class="as-header header-layout">
+        <div class="row align-items-center justify-content-between">
+          <div class="col-auto">
+            <div class="header-logo">
+              <img src="{{document_logo}}" alt="Invoice Logo" style="width: 12rem">
+            </div>
+          </div>
+          <div class="col-auto">
+            <h1 class="big-title"> {{document_title}} </h1>
+          </div>
+        </div>
+        <div class="header-bottom">
+          <div class="row align-items-center justify-content-between">
+            <div class="col-auto">
+            </div>
+            <div class="col-auto">
+              <p class="invoice-date"><b>{{date_title}}: </b> {{date}} </p>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="row justify-content-between my-4">
+        <div class="col-auto">
+          <div class="invoice-left">
+            <address>
+              {{invoice_title}}: #{{invoice_number}}<br>
+              {{order_title}}: #{{order_number}} <br>
+              {{payment_title}}: {{payment_method}} <br>
+            </address>
+          </div>
+        </div>
+        <div class="col-auto">
+          <div class="invoice-right">
+            <b>{{company_name}}</b>
+            <address>
+              {{address_line_1}}<br>
+              {{address_line_2}}<br>
+              {{address_line_3}}
+            </address>
+          </div>
+        </div>
+      </div>
+      <div class="row gx-0">
+        <div class="col-6">
+          <div class="info-box info-left">
+            <b>{{invoice_address_title}}</b>
+            <address>
+              {{invoice_name}} <br>
+              {{invoice_company}} <br>
+              {{invoice_address_line_1}} <br>
+              {{invoice_address_line_2}} <br>
+              {{invoice_address_line_3}}
+            </address>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="info-box info-right">
+            <b>{{shipping_address_title}}</b>
+            <address>
+              {{shipping_name}} <br>
+              {{shipping_company}} <br>
+              {{shipping_address_line_1}} <br>
+              {{shipping_address_line_2}} <br>
+              {{shipping_address_line_3}}
+            </address>
+          </div>
+        </div>
+      </div>
+
+      <table class="invoice-table table-style">
+        <thead>
+          <tr>
+            <th>{{description_h}}</th>
+            <th>{{amount_h}}</th>
+            <th>{{tax_h}}</th>
+            <th>{{price_h}}</th>
+            <th>{{sum_price_h}}</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          {{line_items_rows}}
+
+          <tr class="">
+            <td colspan="3" class="invoice-right"><b>{{subtotal_title}}:</b></td>
+            <td colspan="2">{{sub_total}}</td>
+          </tr>
+          {{discount_html}}
+
+          <tr class="">
+            <td colspan="3" class="invoice-right"><b>{{shipping_title}}:</b></td>
+            <td colspan="2">{{shipping}}</td>
+          </tr>
+          <tr class="">
+            <td colspan="3" class="invoice-right"><b>{{tax_title}}:</b></td>
+            <td colspan="2">{{tax}}</td>
+          </tr>
+          <tr class="">
+            <td colspan="3" class="invoice-right"><b>{{total_title}}:</b></td>
+            <td colspan="2">{{total_sum}}</td>
+          </tr>
+        </tbody>
+      </table>
+      {{footer}}
+    </main>
+  </div>
+  <script src="./assets/js/bootstrap.min.js"></script>
+</body>
+</html>
