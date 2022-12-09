@@ -247,7 +247,7 @@ class InvoiceCancellationService extends TransactionBaseService {
         // code for upload file into cloud service
         const uploadFile = await this.file_.uploadProtected({
             path: generatePDF.path,
-            originalname: generatePDF.title
+            originalname: `${generatePDF.title}.pdf`
         })
 
         // delete after finished upload
