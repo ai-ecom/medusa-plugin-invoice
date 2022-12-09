@@ -90,12 +90,12 @@ class InvoiceService extends TransactionBaseService {
 
         const invoice = await invoiceRepo.findOne({ order_id: orderId }, config)
 
-        if (!invoice) {
-            throw new MedusaError(
-                MedusaError.Types.NOT_FOUND,
-                `Invoice with OrderId ${orderId} was not found`
-            )
-        }
+        // if (!invoice) {
+        //     throw new MedusaError(
+        //         MedusaError.Types.NOT_FOUND,
+        //         `Invoice with OrderId ${orderId} was not found`
+        //     )
+        // }
 
         return invoice
     }
@@ -153,25 +153,41 @@ class InvoiceService extends TransactionBaseService {
                 setting[x.option] = x.value
             }
         })
+
+        // check if invoice with current order id exist
+        const isInvoiceExist = await this.retrieveByOrderId(orderId, { relations: ["order"]})
         
-        const getInvoiceNumberFormat = setting['invoice_number_format']
-        const getCurrentNumber = setting['number_counter']
-        const getOverdueDays = setting['overdue_days']
+        let invoice
 
-        await this.invoiceSettings_.set('number_counter', (getCurrentNumber + 1).toString())
+        if (isInvoiceExist) {
+            invoice = isInvoiceExist
+            const listArchivedInvoice = invoice.metadata?.archived_invoices || []
+            listArchivedInvoice.push(invoice.file_url)
+            this.update(invoice.id, {
+                metadata: {
+                    archived_invoices: listArchivedInvoice
+                }
+            })
+        } else {
+            const getInvoiceNumberFormat = setting['invoice_number_format']
+            const getCurrentNumber = setting['number_counter']
+            const getOverdueDays = setting['overdue_days']
 
-        // create invoice
-        const invoiceCreate: CreateInvoiceInput = {
-            order_id: order.id,
-            file_url: "no_url",
-            number: getCurrentNumber.toString(),
-            status: InvoiceStatus.DRAFT,
-            paid_status: InvoicePaidStatus.UNPAID,
-            overdue_at: addDays(new Date(), getOverdueDays)
+            await this.invoiceSettings_.set('number_counter', (getCurrentNumber + 1).toString())
+            
+            // create invoice
+            const invoiceCreate: CreateInvoiceInput = {
+                order_id: order.id,
+                file_url: "no_url",
+                number: getCurrentNumber.toString(),
+                status: InvoiceStatus.DRAFT,
+                paid_status: InvoicePaidStatus.UNPAID,
+                overdue_at: addDays(new Date(), getOverdueDays)
+            }
+
+            invoice = await this.create(invoiceCreate)
         }
 
-        const invoice = await this.create(invoiceCreate)
-        
         // inject order and setting data into invoice
         invoice.order = order
         // @ts-ignore
