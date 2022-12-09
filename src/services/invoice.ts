@@ -1,4 +1,4 @@
-import { EventBusService, TransactionBaseService, OrderService, TotalsService, IFileService } from '@medusajs/medusa';
+import { EventBusService, TransactionBaseService, OrderService, TotalsService, IFileService, NoteService } from '@medusajs/medusa';
 import { formatException } from '@medusajs/medusa/dist/utils/exception-formatter';
 import { MedusaError } from "medusa-core-utils"
 import { EntityManager } from "typeorm"
@@ -21,6 +21,7 @@ type InjectedDependencies = {
     fileService: IFileService
     invoiceSettingsService: InvoiceSettingsService
     invoiceRepository_: typeof InvoiceRepository
+    noteService: NoteService
 }
 
 class InvoiceService extends TransactionBaseService {
@@ -33,6 +34,7 @@ class InvoiceService extends TransactionBaseService {
     protected readonly orderService_: OrderService
     protected readonly file_: IFileService
     protected readonly invoiceSettings_: InvoiceSettingsService
+    protected readonly note_: NoteService
 
     static readonly IndexName = `invoices`
     static readonly Events = {
@@ -41,7 +43,7 @@ class InvoiceService extends TransactionBaseService {
         DELETED: "invoice.deleted",
     }
 
-    constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService }: InjectedDependencies) {
+    constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, noteService }: InjectedDependencies) {
         super(arguments[0])
 
         this.manager_ = manager
@@ -51,6 +53,7 @@ class InvoiceService extends TransactionBaseService {
         this.orderService_ = orderService
         this.invoiceSettings_ = invoiceSettingsService
         this.file_ = fileService
+        this.note_ = noteService
     }
 
     async list(
@@ -163,9 +166,20 @@ class InvoiceService extends TransactionBaseService {
             invoice = isInvoiceExist
             const listArchivedInvoice = invoice.metadata?.archived_invoices || []
             listArchivedInvoice.push(invoice.file_url)
-            this.update(invoice.id, {
+            await this.update(invoice.id, {
                 metadata: {
                     archived_invoices: listArchivedInvoice
+                }
+            })
+
+            await this.note_.create({
+                resource_type: "order",
+                resource_id: order.id,
+                value: "Invoice PDF Regenerated",
+            },
+            {
+                metadata: {
+                    invoice_id: invoice.id
                 }
             })
         } else {
@@ -186,6 +200,17 @@ class InvoiceService extends TransactionBaseService {
             }
 
             invoice = await this.create(invoiceCreate)
+
+            await this.note_.create({
+                resource_type: "order",
+                resource_id: order.id,
+                value: "Invoice PDF Created",
+            },
+            {
+                metadata: {
+                    invoice_id: invoice.id
+                }
+            })
         }
 
         // inject order and setting data into invoice

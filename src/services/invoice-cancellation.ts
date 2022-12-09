@@ -1,4 +1,4 @@
-import { EventBusService, TransactionBaseService, OrderService, TotalsService, IFileService, LineItemService, LineItem } from '@medusajs/medusa';
+import { EventBusService, TransactionBaseService, OrderService, TotalsService, IFileService, LineItemService, LineItem, NoteService } from '@medusajs/medusa';
 import { formatException } from '@medusajs/medusa/dist/utils/exception-formatter';
 import { MedusaError } from "medusa-core-utils"
 import { EntityManager } from "typeorm"
@@ -25,6 +25,7 @@ type InjectedDependencies = {
     invoiceSettingsService: InvoiceSettingsService
     invoiceService: InvoiceService
     invoiceRepository_: typeof InvoiceCancellationRepository
+    noteService: NoteService
 }
 
 class InvoiceCancellationService extends TransactionBaseService {
@@ -40,6 +41,7 @@ class InvoiceCancellationService extends TransactionBaseService {
     protected readonly lineItem_: LineItemService
     protected readonly invoice_: InvoiceService
     protected readonly options_: any
+    protected readonly note_: NoteService
 
     static readonly IndexName = `invoice-cancellations`
     static readonly Events = {
@@ -48,7 +50,7 @@ class InvoiceCancellationService extends TransactionBaseService {
         DELETED: "invoice_cancellation.deleted",
     }
 
-    constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, lineItemService, invoiceService }: InjectedDependencies, options) {
+    constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, lineItemService, invoiceService, noteService }: InjectedDependencies, options) {
         super(arguments[0])
 
         this.options_ = options
@@ -61,6 +63,7 @@ class InvoiceCancellationService extends TransactionBaseService {
         this.file_ = fileService
         this.lineItem_ = lineItemService
         this.invoice_ = invoiceService
+        this.note_ = noteService
     }
 
     async list(
@@ -178,6 +181,17 @@ class InvoiceCancellationService extends TransactionBaseService {
 
         const invoiceCancellation = await this.create(invoiceCancellationCreate)
         
+        await this.note_.create({
+            resource_type: "order",
+            resource_id: order.id,
+            value: "Invoice Cancellation PDF Created"
+        },
+        {
+            metadata: {
+                invoice_id: invoiceCancellation.id
+            }
+        })
+
         // inject order and setting data into invoice
         // @ts-ignore
         invoiceCancellation.invoice = invoiceData
