@@ -14,6 +14,8 @@ export default (app) => {
 
     route.get("/:id", middlewares.wrap(require("./get-invoice-cancellation").default));
 
+    route.get("/:id/view", middlewares.wrap(require("./view-invoice-cancellation").default));
+
     return app;
 }
 
@@ -31,3 +33,4 @@ export const defaultAdminInvoiceFields: (keyof InvoiceCancellation)[] = [
 export * from "./create-invoice-cancellation";
 export * from "./list-invoice-cancellation";
 export * from "./get-invoice-cancellation";
+export * from "./view-invoice-cancellation";

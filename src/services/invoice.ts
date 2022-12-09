@@ -238,6 +238,23 @@ class InvoiceService extends TransactionBaseService {
         })
     }
 
+    async viewPDF(invoiceId: string): Promise<any> {
+        const invoice = await this.retrieve(invoiceId, {})
+        const regex = /(https?:\/\/)?([\da-z\.-]+)\.([a-z\.\/]{2,6})([\/\w \.-]*)/gm; // split all file_url
+
+        if (!invoice.file_url || invoice.file_url == "no_url") {
+            throw new MedusaError(
+                MedusaError.Types.NOT_FOUND,
+                `Invoice with Id ${invoiceId} was not found, Pls regenerate invoice!`
+            )
+        }
+        
+        const getKey = regex.exec(invoice.file_url) // remove url and get the key!
+        return await this.file_.getDownloadStream({
+            fileKey: getKey[4]
+        })
+    }
+
     async createAndGeneratePDFInvoice(orderId: string): Promise<any> {
         const invoice = await this.convertOrderIntoInvoiceDataWithReturnOrderAndCreateInvoice(orderId)
         const generatePDF = await generateInvoicePDF(invoice)
