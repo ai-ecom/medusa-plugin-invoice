@@ -1,4 +1,5 @@
 import { EventBusService } from "@medusajs/medusa";
+import { InvoicePaidStatus } from "../models/invoice";
 import InvoiceService from "../services/invoice";
 import InvoiceCancellationService from "../services/invoice-cancellation";
 
@@ -16,7 +17,11 @@ class InvoiceSubscriber {
 
       // Create Invoice when create_when
       this.eventBus_.subscribe(create_when, async (order: any) => {
-        await this.invoice_.createAndGeneratePDFInvoice(order.id)
+        const invoice = await this.invoice_.createAndGeneratePDFInvoice(order.id)
+        
+        if (create_when == "order.payment_captured") {
+          this.invoice_.update(invoice.id, { paid_status: InvoicePaidStatus.PAID })
+        }
       });
 
       // Todo Create Invoice Cancelation For Item Return
