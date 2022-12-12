@@ -48,6 +48,7 @@ class InvoiceCancellationService extends TransactionBaseService {
         UPDATED: "invoice_cancellation.updated",
         CREATED: "invoice_cancellation.created",
         DELETED: "invoice_cancellation.deleted",
+        PDF_CREATED: "invoice.pdf_created"
     }
 
     constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, lineItemService, invoiceService, noteService }: InjectedDependencies, options) {
@@ -184,11 +185,12 @@ class InvoiceCancellationService extends TransactionBaseService {
         await this.note_.create({
             resource_type: "order",
             resource_id: order.id,
-            value: "Invoice Cancellation PDF Created"
+            value: "invoice_cancellation.pdf_created"
         },
         {
             metadata: {
-                invoice_id: invoiceCancellation.id
+                invoice_id: invoiceCancellation.id,
+                type: "invoice-cancellation"
             }
         })
 

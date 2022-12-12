@@ -41,6 +41,7 @@ class InvoiceService extends TransactionBaseService {
         UPDATED: "invoice.updated",
         CREATED: "invoice.created",
         DELETED: "invoice.deleted",
+        PDF_CREATED: "invoice.pdf_created"
     }
 
     constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, noteService }: InjectedDependencies) {
@@ -175,11 +176,12 @@ class InvoiceService extends TransactionBaseService {
             await this.note_.create({
                 resource_type: "order",
                 resource_id: order.id,
-                value: "Invoice PDF Regenerated",
+                value: "invoice.pdf_regenerated",
             },
             {
                 metadata: {
-                    invoice_id: invoice.id
+                    invoice_id: invoice.id,
+                    type: "invoice"
                 }
             })
         } else {
@@ -204,11 +206,12 @@ class InvoiceService extends TransactionBaseService {
             await this.note_.create({
                 resource_type: "order",
                 resource_id: order.id,
-                value: "Invoice PDF Created",
+                value: "invoice.pdf_created",
             },
             {
                 metadata: {
-                    invoice_id: invoice.id
+                    invoice_id: invoice.id,
+                    type: "invoice"
                 }
             })
         }
