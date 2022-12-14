@@ -114,7 +114,7 @@ export async function generateInvoicePDF(invoice) {
         args: ["--no-sandbox"], headless: true,
       });
       const page = await browser.newPage();
-      console.log(pathFile)
+      
       let html = fs.readFileSync(`${pathFile}/templates/index.html`, 'utf-8');
 
       // Show discount row only if the value exists and > 0
