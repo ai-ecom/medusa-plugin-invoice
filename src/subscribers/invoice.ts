@@ -26,6 +26,12 @@ class InvoiceSubscriber {
         }
       });
 
+      // Todo update invoice status when order completed
+      this.eventBus_.subscribe("order.completed", async (order: any) => {
+        const invoice = await this.invoice_.retrieveByOrderId(order.id, {})
+        this.invoice_.update(invoice.id, { status: InvoiceStatus.COMPLETED })
+      });
+
       // Todo Create Invoice Cancelation For Item Return
       this.eventBus_.subscribe("order.items_returned", async (data: any) => {
         const invoice = await this.invoiceCancellation_.createAndGeneratePDFInvoice(data)
