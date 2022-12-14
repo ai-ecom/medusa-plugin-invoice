@@ -16,6 +16,8 @@ export default (app) => {
 
     route.get("/:id/view", middlewares.wrap(require("./view-invoice").default));
 
+    route.get("/:id/resend", middlewares.wrap(require("./resend-invoice").default));
+
     route.put("/:id", middlewares.wrap(require("./update-invoice").default));
 
     return app;
@@ -39,3 +41,4 @@ export * from "./update-invoice";
 export * from "./list-invoice";
 export * from "./get-invoice";
 export * from "./view-invoice";
+export * from "./resend-invoice";

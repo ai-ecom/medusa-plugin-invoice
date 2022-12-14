@@ -22,6 +22,7 @@ type InjectedDependencies = {
     invoiceSettingsService: InvoiceSettingsService
     invoiceRepository_: typeof InvoiceRepository
     noteService: NoteService
+    sendgridService: any
 }
 
 class InvoiceService extends TransactionBaseService {
@@ -35,6 +36,8 @@ class InvoiceService extends TransactionBaseService {
     protected readonly file_: IFileService
     protected readonly invoiceSettings_: InvoiceSettingsService
     protected readonly note_: NoteService
+    protected readonly options_: any
+    protected readonly sendgrid_: any
 
     static readonly IndexName = `invoices`
     static readonly Events = {
@@ -44,7 +47,7 @@ class InvoiceService extends TransactionBaseService {
         PDF_CREATED: "invoice.pdf_created"
     }
 
-    constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, noteService }: InjectedDependencies) {
+    constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, noteService, sendgridService }: InjectedDependencies, options) {
         super(arguments[0])
 
         this.manager_ = manager
@@ -55,6 +58,8 @@ class InvoiceService extends TransactionBaseService {
         this.invoiceSettings_ = invoiceSettingsService
         this.file_ = fileService
         this.note_ = noteService
+        this.options_ = options
+        this.sendgrid_ = sendgridService
     }
 
     async list(
@@ -300,6 +305,49 @@ class InvoiceService extends TransactionBaseService {
 
         // update url
         return await this.update(invoice.id, { file_url: uploadFile.url })
+    }
+
+    async sendEmailToCustomer(invoiceId: string) {
+        const invoice = await this.retrieve(invoiceId, { relations: ["order", "order.items"] })
+        const pdfFile = await this.viewPDF(invoiceId)
+    
+        var chunks = [];
+
+        pdfFile.on('data', function(chunk) {
+            chunks.push(chunk);
+        });
+
+        pdfFile.on('end', () => {
+            const base64PDF = Buffer.concat(chunks).toString('base64')
+            
+            const sendOptions = {
+                to: invoice.order.email,
+                from: process.env.EMAIL_DEFAULT_FROM,
+                dynamic_template_data: invoice,
+                custom_args: {
+                    medusa: {
+                        type: "invoice",
+                        invoice_id: invoice.id
+                    }
+                },
+                template_id: this.options_.email.template.invoice,
+                attachments: [
+                    {
+                        content: base64PDF,
+                        filename: 'invoice.pdf',
+                        type: 'application/pdf',
+                        disposition: 'attachment',
+                        content_id: 'invoice',
+                    },
+                ],
+            };
+
+            this.sendgrid_.sendEmail(sendOptions)
+            const dateNow = new Date()
+            this.update(invoice.id, { status: InvoiceStatus.SENT, notified_via_email_at: dateNow })
+        });
+
+        return invoice
     }
 }
 

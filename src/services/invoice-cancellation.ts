@@ -26,6 +26,7 @@ type InjectedDependencies = {
     invoiceService: InvoiceService
     invoiceRepository_: typeof InvoiceCancellationRepository
     noteService: NoteService
+    sendgridService: any
 }
 
 class InvoiceCancellationService extends TransactionBaseService {
@@ -42,6 +43,7 @@ class InvoiceCancellationService extends TransactionBaseService {
     protected readonly invoice_: InvoiceService
     protected readonly options_: any
     protected readonly note_: NoteService
+    protected readonly sendgrid_: any
 
     static readonly IndexName = `invoice-cancellations`
     static readonly Events = {
@@ -51,7 +53,7 @@ class InvoiceCancellationService extends TransactionBaseService {
         PDF_CREATED: "invoice.pdf_created"
     }
 
-    constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, lineItemService, invoiceService, noteService }: InjectedDependencies, options) {
+    constructor({ manager, eventBusService, orderService, totalsService, invoiceSettingsService, fileService, lineItemService, invoiceService, noteService, sendgridService }: InjectedDependencies, options) {
         super(arguments[0])
 
         this.options_ = options
@@ -65,6 +67,7 @@ class InvoiceCancellationService extends TransactionBaseService {
         this.lineItem_ = lineItemService
         this.invoice_ = invoiceService
         this.note_ = noteService
+        this.sendgrid_ = sendgridService
     }
 
     async list(
@@ -289,7 +292,50 @@ class InvoiceCancellationService extends TransactionBaseService {
         });
 
         // update url
-        return await this.update(invoiceCancellation.id, { file_url: uploadFile.url })
+        return this.update(invoiceCancellation.id, { file_url: uploadFile.url })
+    }
+
+    async sendEmailToCustomer(invoiceId: string) {
+        const invoice = await this.retrieve(invoiceId, { relations: ["refund", "refund.order", "refund.order.items"] })
+        const pdfFile = await this.viewPDF(invoiceId)
+    
+        var chunks = [];
+
+        pdfFile.on('data', function(chunk) {
+            chunks.push(chunk);
+        });
+
+        pdfFile.on('end', () => {
+            const base64PDF = Buffer.concat(chunks).toString('base64')
+            
+            const sendOptions = {
+                to: invoice.refund.order.email,
+                from: process.env.EMAIL_DEFAULT_FROM,
+                dynamic_template_data: invoice,
+                custom_args: {
+                    medusa: {
+                        type: "invoice_cancellation",
+                        invoice_id: invoice.id
+                    }
+                },
+                template_id: this.options_.email.template.invoice_cancellation,
+                attachments: [
+                    {
+                        content: base64PDF,
+                        filename: 'invoice-cancellation.pdf',
+                        type: 'application/pdf',
+                        disposition: 'attachment',
+                        content_id: 'invoice-cancellation',
+                    },
+                ],
+            }
+
+            this.sendgrid_.sendEmail(sendOptions)
+            const dateNow = new Date()
+            this.update(invoice.id, { notified_via_email_at: dateNow })
+        });
+
+        return invoice
     }
 }
 

@@ -16,6 +16,8 @@ export default (app) => {
 
     route.get("/:id/view", middlewares.wrap(require("./view-invoice-cancellation").default));
 
+    route.get("/:id/resend", middlewares.wrap(require("./resend-invoice-cancellation").default));
+
     return app;
 }
 
@@ -34,3 +36,4 @@ export * from "./create-invoice-cancellation";
 export * from "./list-invoice-cancellation";
 export * from "./get-invoice-cancellation";
 export * from "./view-invoice-cancellation";
+export * from "./resend-invoice-cancellation";
