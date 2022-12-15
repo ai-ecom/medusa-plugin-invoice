@@ -7,7 +7,7 @@
   "scripts": {
     "build": "babel src --out-dir . --ignore **/__tests__ --extensions \".ts,.js\"",
     "start": "medusa develop",
-    "clean": "./node_modules/.bin/rimraf services/ types/ utils/ models/ migrations/ api/ repositories/ subscribers/ interfaces/ index.js index.map.js invoices/temp/*.pdf",
+    "clean": "./node_modules/.bin/rimraf services/ types/ utils/ models/ migrations/ api/ repositories/ subscribers/ interfaces/ loaders/ index.js index.map.js invoices/temp/*.pdf",
     "watch": "babel -w src --out-dir . --ignore **/__tests__ --extensions \".ts,.js\"",
     "prepare": "npm run clean && cross-env NODE_ENV=production npm run build"
   },
