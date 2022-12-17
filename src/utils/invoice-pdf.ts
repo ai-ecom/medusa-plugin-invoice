@@ -100,12 +100,12 @@ export async function generateInvoicePDF(invoice) {
 
       const nameOnFile = (invoiceLastName || invoiceFirstName).toUpperCase()
       const targetDir = `${pathFile}/temp`;
-      let pdfTitle = `INV-${invoiceDate.getFullYear()}-${invoiceDate.getMonth()}-${invoiceDate.getDate()}-${invNumber}-${nameOnFile}`;
+      let pdfTitle = `INV-${invoiceDate.getFullYear()}-${invoiceDate.getMonth() + 1}-${invoiceDate.getDate()}-${invNumber}-${nameOnFile}`;
       let invTitle = setting.invoice_title || "INVOICE"
 
       if (invType == "cancellation") {
-        pdfTitle = `INV-CANCELLATION-${invoiceDate.getFullYear()}-${invoiceDate.getMonth()}-${invoiceDate.getDate()}-${invNumber}-${nameOnFile}`;
-        invTitle = `Cancellation of Invoice <span style="font-size: 14pt; display: block;">INV-${mainInvoiceDate.getFullYear()}-${mainInvoiceDate.getMonth()}-${mainInvoiceDate.getDate()}-${mainInvoice.number}-${nameOnFile}</span>`
+        pdfTitle = `INV-CANCELLATION-${invoiceDate.getFullYear()}-${invoiceDate.getMonth() + 1}-${invoiceDate.getDate()}-${invNumber}-${nameOnFile}`;
+        invTitle = `Cancellation of Invoice <span style="font-size: 14pt; display: block;">INV-${mainInvoiceDate.getFullYear()}-${mainInvoiceDate.getMonth() + 1}-${mainInvoiceDate.getDate()}-${mainInvoice.number}-${nameOnFile}</span>`
       }
 
       const targetPath = `${targetDir}/${pdfTitle}.pdf`;
