@@ -307,7 +307,7 @@ class InvoiceService extends TransactionBaseService {
         return await this.update(invoice.id, { file_url: uploadFile.url })
     }
 
-    async sendEmailToCustomer(invoiceId: string) {
+    async sendEmailToCustomer(invoiceId: string, to: string = null) {
         const invoice = await this.retrieve(invoiceId, { relations: ["order", "order.items"] })
         const pdfFile = await this.viewPDF(invoiceId)
     
@@ -321,7 +321,7 @@ class InvoiceService extends TransactionBaseService {
             const base64PDF = Buffer.concat(chunks).toString('base64')
             
             const sendOptions = {
-                to: invoice.order.email,
+                to: to || invoice.order.email,
                 from: process.env.EMAIL_DEFAULT_FROM,
                 dynamic_template_data: invoice,
                 custom_args: {
