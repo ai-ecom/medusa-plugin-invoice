@@ -344,7 +344,11 @@ class InvoiceService extends TransactionBaseService {
 
             this.sendgrid_.sendEmail(sendOptions)
             const dateNow = new Date()
-            this.update(invoice.id, { status: InvoiceStatus.SENT, notified_via_email_at: dateNow })
+            if (invoice.status == InvoiceStatus.SENT) {
+                this.update(invoice.id, { status: InvoiceStatus.RESEND, notified_via_email_at: dateNow })
+            } else {
+                this.update(invoice.id, { status: InvoiceStatus.SENT, notified_via_email_at: dateNow })
+            }
         });
 
         return invoice
