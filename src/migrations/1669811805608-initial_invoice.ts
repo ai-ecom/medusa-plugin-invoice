@@ -7,7 +7,7 @@ export class initialInvoice1669811805608 implements MigrationInterface {
         await queryRunner.query(`
             CREATE TYPE "invoice_status_enum" AS ENUM
             (
-                'draft', 'sent', 'viewed', 'completed'
+                'draft', 'sent', 'resend', 'viewed', 'completed'
             );
 
             CREATE TYPE "invoice_paid_status_enum" AS ENUM

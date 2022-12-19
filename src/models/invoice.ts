@@ -13,6 +13,7 @@ import { DbAwareColumn } from "@medusajs/medusa/dist/utils/db-aware-column";
 export enum InvoiceStatus {
     DRAFT = "draft",
     SENT = "sent",
+    RESEND = "resend",
     VIEWED = "viewed",
     COMPLETED = "completed"
 }
