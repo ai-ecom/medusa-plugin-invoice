@@ -4,12 +4,14 @@ import { InvoiceCancellation } from "../../../../models/invoice-cancellation";
 import middlewares from "@medusajs/medusa/dist/api/middlewares"
 import { transformQuery } from "../../../middleware/custom-query"
 import { AdminGetInvoiceCancellationsParams } from "./list-invoice-cancellation";
+import authenticate from "@medusajs/medusa/dist/api/middlewares/authenticate"
 
 const route = Router()
 
 export default (app) => {
     app.use("/invoice-cancellations", route);
-
+    route.use(authenticate())
+    
     route.post("/", middlewares.wrap(require("./create-invoice-cancellation").default));
 
     route.get(
