@@ -4,12 +4,14 @@ import { Invoice } from "../../../../models/invoice";
 import middlewares from "@medusajs/medusa/dist/api/middlewares"
 import { transformQuery } from "../../../middleware/custom-query"
 import { AdminGetInvoicesParams } from "./list-invoice";
+import authenticate from "@medusajs/medusa/dist/api/middlewares/authenticate"
 
 const route = Router()
 
 export default (app) => {
     app.use("/invoices", route);
-
+    route.use(authenticate())
+    
     route.post("/", middlewares.wrap(require("./create-invoice").default));
 
     route.get(

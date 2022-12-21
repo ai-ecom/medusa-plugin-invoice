@@ -2,11 +2,13 @@ import { Router } from "express";
 import { InvoiceSettings } from "../../../../models/invoice-settings";
 import middlewares from "../../../middleware";
 import "reflect-metadata"
+import authenticate from "@medusajs/medusa/dist/api/middlewares/authenticate"
 
 const route = Router()
 
 export default (app) => {
     app.use("/invoice-settings", route);
+    route.use(authenticate())
 
     route.get("/", middlewares.wrap(require("./all-invoice-settings").default));
 
